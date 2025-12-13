@@ -4,38 +4,47 @@ import {
   MessageCircle,
   ShieldCheck,
   Ruler,
-  Factory,
   Wrench,
   Star,
   ChevronRight,
   Menu,
   X,
-  Sparkles,
   MapPin,
   CheckCircle2,
   BadgeCheck,
   ArrowUpRight,
   Wind,
   RotateCw,
+  Sparkles,
+  Lightbulb
 } from "lucide-react";
 
-/** 카카오톡 오픈채팅 링크만 여기 바꾸면 됩니다 */
-const KAKAO_CHAT_URL = "https://open.kakao.com/o/여기에_오픈채팅_링크";
+/** [설정] 카카오톡 오픈채팅 링크 & Gemini API 키 */
+const KAKAO_CHAT_URL = "https://open.kakao.com/o/sYourLinkID";
+const GEMINI_API_KEY = ""; // 여기에 API 키를 입력하세요
 
-/** 운영 정보(필요하면 수정) */
+/** 브랜드 정보 */
 const BRAND = {
-  name: "더슬렛",
-  tagline: "유니슬렛(스마트커튼) 전문 방문견적",
-  serviceArea: "부산 전지역",
-  phone: "010-7534-2913",
+  name: "THE SLAT",
+  tagline: "프리미엄 유니슬렛 전문",
+  serviceArea: "부산 전지역", // 서울/경기 등 사장님 지역으로 변경하세요
+  phone: "010-1234-5678",
   bizHours: "매일 09:00-20:00",
 };
 
-/** Unsplash 랜덤 이미지 (유니슬렛은 ‘vertical blinds / smart curtain’ 키워드가 가장 근접) */
-const img = (keywords) =>
-  `https://source.unsplash.com/featured/1600x1000/?${encodeURIComponent(
-    keywords
-  )}&sig=${Math.floor(Math.random() * 10_000)}`;
+/** 고화질 이미지 에셋 */
+const IMAGES = [
+  "https://images.unsplash.com/photo-1594040226829-7f251ab46d80?auto=format&fit=crop&w=1600&q=80",
+  "https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=1600&q=80", 
+  "https://images.unsplash.com/photo-1528458909336-e7a0adfed0a5?auto=format&fit=crop&w=1600&q=80",
+  "https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?auto=format&fit=crop&w=1600&q=80",
+  "https://images.unsplash.com/photo-1484101403633-562f891dc89a?auto=format&fit=crop&w=1600&q=80",
+  "https://images.unsplash.com/photo-1502005229762-cf1e2a862d84?auto=format&fit=crop&w=1600&q=80",
+  "https://images.unsplash.com/photo-1615873968403-89e068629265?auto=format&fit=crop&w=1600&q=80",
+  "https://images.unsplash.com/photo-1617104424032-b9bd6972d0e4?auto=format&fit=crop&w=1600&q=80"
+];
+
+const img = (index) => IMAGES[index % IMAGES.length];
 
 function classNames(...xs) {
   return xs.filter(Boolean).join(" ");
@@ -67,7 +76,7 @@ function copyToClipboard(text) {
   });
 }
 
-/** 섹션 리빌(마이크로 인터랙션) */
+/** 섹션 애니메이션 컴포넌트 */
 function Reveal({ children, className = "" }) {
   const ref = useRef(null);
   const [show, setShow] = useState(false);
@@ -113,15 +122,17 @@ function Chip({ children }) {
   );
 }
 
-function Button({ children, className = "", onClick, as = "button", href }) {
+function Button({ children, className = "", onClick, as = "button", href, disabled }) {
   const Comp = as;
   return (
     <Comp
       href={href}
       onClick={onClick}
+      disabled={disabled}
       className={classNames(
         "inline-flex items-center justify-center gap-2 rounded-2xl px-5 py-3 text-sm font-semibold",
         "transition active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-900/30",
+        disabled ? "opacity-50 cursor-not-allowed" : "",
         className
       )}
     >
@@ -153,22 +164,141 @@ function Toast({ open, message, onClose }) {
   );
 }
 
+/** [기능 추가] AI 스타일리스트 컴포넌트 */
+function AIStylistSection() {
+  const [wallColor, setWallColor] = useState("");
+  const [furnitureColor, setFurnitureColor] = useState("");
+  const [mood, setMood] = useState("");
+  const [recommendation, setRecommendation] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const handleAIRecommendation = async () => {
+    if (!wallColor || !furnitureColor || !mood) {
+      alert("모든 항목을 입력해주세요!");
+      return;
+    }
+    setIsLoading(true);
+    setError(null);
+    setRecommendation(null);
+    const prompt = `
+      당신은 10년차 유니슬렛 전문 인테리어 디자이너입니다.
+      고객의 집 정보가 다음과 같을 때, 가장 잘 어울리는 유니슬렛 색상 조합 3가지를 추천해주세요.
+      (단색, 투톤 믹스 등 유니슬렛의 특징을 살려서)
+      
+      [고객 정보]
+      - 벽지 색상: ${wallColor}
+      - 가구/바닥 톤: ${furnitureColor}
+      - 원하는 분위기: ${mood}
+
+      [답변 형식]
+      - 친절하고 전문적인 말투.
+      - 3가지 옵션 추천.
+      - 마무리로 "더슬렛에서 무료 실측 받아보세요" 유도.
+    `;
+    try {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${GEMINI_API_KEY}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+      });
+      const data = await response.json();
+      if (data.error) throw new Error(data.error.message);
+      setRecommendation(data.candidates?.[0]?.content?.parts?.[0]?.text);
+    } catch (err) {
+      setError("AI 전문가와 연결 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <section id="ai-stylist" className="py-24 bg-stone-50 border-y border-stone-200">
+      <div className="mx-auto max-w-4xl px-4 sm:px-6">
+        <Reveal>
+          <div className="text-center mb-12">
+            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-violet-100 text-violet-700 text-xs font-bold mb-3 border border-violet-200">
+              <Sparkles size={12} fill="currentColor"/> AI Beta
+            </span>
+            <h2 className="text-3xl font-extrabold text-stone-900 mb-4">✨ AI 맞춤 유니슬렛 추천</h2>
+            <p className="text-stone-600">
+              우리 집에 어떤 컬러가 어울릴지 고민되시나요?<br/>
+              벽지와 가구 톤만 알려주세요. AI 전문가가 골라드립니다.
+            </p>
+          </div>
+
+          <div className="bg-white rounded-[2rem] shadow-xl border border-stone-100 p-8 md:p-10">
+            <div className="grid md:grid-cols-3 gap-6 mb-8">
+              <div>
+                <label className="block text-sm font-bold text-stone-700 mb-2">벽지 색상</label>
+                <input type="text" placeholder="예: 화이트, 연그레이" className="w-full bg-stone-50 border border-stone-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-violet-500" value={wallColor} onChange={(e) => setWallColor(e.target.value)}/>
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-stone-700 mb-2">가구/바닥 톤</label>
+                <input type="text" placeholder="예: 오크 우드, 블랙" className="w-full bg-stone-50 border border-stone-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-violet-500" value={furnitureColor} onChange={(e) => setFurnitureColor(e.target.value)}/>
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-stone-700 mb-2">원하는 분위기</label>
+                <input type="text" placeholder="예: 아늑함, 모던함" className="w-full bg-stone-50 border border-stone-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-violet-500" value={mood} onChange={(e) => setMood(e.target.value)}/>
+              </div>
+            </div>
+
+            <div className="text-center mb-8">
+              <Button 
+                onClick={handleAIRecommendation} 
+                disabled={isLoading} 
+                className="w-full md:w-auto bg-violet-600 hover:bg-violet-700 text-white shadow-lg"
+              >
+                {isLoading ? (
+                  <>분석 중...</>
+                ) : (
+                  <><Sparkles size={18} className="text-yellow-300"/> AI 추천받기</>
+                )}
+              </Button>
+            </div>
+
+            {recommendation && (
+              <div className="bg-stone-50 border border-stone-200 rounded-2xl p-6 md:p-8 relative animate-fade-in">
+                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-white px-4 py-1 rounded-full border border-stone-200 shadow-sm flex items-center gap-2 text-violet-700 font-bold text-sm">
+                  <Lightbulb size={16}/> AI 전문가의 제안
+                </div>
+                <div className="prose prose-stone max-w-none whitespace-pre-line leading-relaxed text-stone-800 text-sm md:text-base">
+                  {recommendation}
+                </div>
+                <div className="mt-6 pt-6 border-t border-stone-200 text-center">
+                   <button onClick={() => scrollToId('cta')} className="text-stone-900 font-bold underline hover:text-violet-600 transition-colors">
+                     이 추천으로 견적 받으러 가기 &rarr;
+                   </button>
+                </div>
+              </div>
+            )}
+            
+            {error && (
+              <div className="bg-red-50 text-red-600 p-4 rounded-xl text-center text-sm">
+                {error}
+              </div>
+            )}
+          </div>
+        </Reveal>
+      </div>
+    </section>
+  );
+}
+
 export default function App() {
   const NAV = useMemo(
     () => [
-      { id: "usp", label: "왜 유니슬렛인가" },
-      { id: "unislat", label: "유니슬렛 소개" },
+      { id: "usp", label: "왜 더슬렛?" },
+      { id: "ai-stylist", label: "AI 추천" },
+      { id: "unislat", label: "제품 소개" },
       { id: "gallery", label: "시공 사례" },
-      { id: "process", label: "진행 과정" },
-      { id: "reviews", label: "후기" },
-      { id: "guarantee", label: "A/S 보증" },
+      { id: "reviews", label: "고객 후기" },
       { id: "cta", label: "무료 상담" },
     ],
     []
   );
 
-  const heroBg = useMemo(() => img("vertical blinds, living room, interior, hotel"), []);
-  const gallerySeed = useMemo(() => Date.now(), []);
+  const heroBg = useMemo(() => img(0), []);
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -178,28 +308,26 @@ export default function App() {
 
   const [lead, setLead] = useState({ name: "", phone: "", area: "" });
 
-  /** 유니슬렛 시공 사례(카피/SEO용: 아파트명 + 유니슬렛/스마트커튼) */
   const GALLERY = useMemo(
     () => [
-      { apt: "해운대 힐스테이트", style: "유니슬렛 · 데이(채광) 중심", k: "vertical blinds, bright living room" },
-      { apt: "센텀 더샵", style: "유니슬렛 · 디밍(눈부심 완화)", k: "vertical blinds, modern apartment" },
-      { apt: "명지 더샵", style: "유니슬렛 · 프라이버시 강조", k: "smart curtain, slatted curtain, interior" },
-      { apt: "연산 롯데캐슬", style: "유니슬렛 · 거실 대형창", k: "vertical blinds, large window, living room" },
-      { apt: "동래 래미안", style: "유니슬렛 · 톤온톤 믹스", k: "vertical blinds, warm interior" },
-      { apt: "서면 아이파크", style: "유니슬렛 · 호텔 무드", k: "hotel interior, vertical blinds" },
-      { apt: "수영 SK뷰", style: "유니슬렛 · 베란다/슬라이딩 도어", k: "vertical blinds, sliding door, apartment" },
-      { apt: "남천 푸르지오", style: "유니슬렛 · 낮/밤 사용성", k: "smart curtain, privacy, living room" },
+      { apt: "해운대 힐스테이트", style: "유니슬렛 · 데이(채광) 중심" },
+      { apt: "센텀 더샵", style: "유니슬렛 · 디밍(눈부심 완화)" },
+      { apt: "명지 더샵", style: "유니슬렛 · 프라이버시 강조" },
+      { apt: "연산 롯데캐슬", style: "유니슬렛 · 거실 대형창" },
+      { apt: "동래 래미안", style: "유니슬렛 · 톤온톤 믹스" },
+      { apt: "서면 아이파크", style: "유니슬렛 · 호텔 무드" },
+      { apt: "수영 SK뷰", style: "유니슬렛 · 베란다/슬라이딩 도어" },
+      { apt: "남천 푸르지오", style: "유니슬렛 · 낮/밤 사용성" },
     ],
     []
   );
 
-  /** 검색 유입용 키워드(페이지에서 실제로 노출되는 형태) */
   const SEO_KEYWORDS = useMemo(
     () => [
-      "유니슬렛", "유니슬랫", "UniSlat", "스마트커튼", "버티컬", "버티컬블라인드",
-      "세로블라인드", "채광조절", "프라이버시", "대형창", "슬라이딩도어",
-      "해운대", "센텀", "광안리", "수영", "남천", "연산", "동래", "명지", "서면",
-      "힐스테이트", "더샵", "푸르지오", "래미안", "롯데캐슬", "아이파크", "SK뷰",
+      "유니슬렛", "UniSlat", "스마트커튼", "버티컬", "차르르커튼",
+      "채광조절", "프라이버시", "대형창", "슬라이딩도어", "더슬렛",
+      "해운대", "센텀", "광안리", "수영", "남천", "연산", "동래", "명지",
+      "힐스테이트", "더샵", "푸르지오", "래미안", "롯데캐슬", "아이파크",
     ],
     []
   );
@@ -208,7 +336,6 @@ export default function App() {
     const onScroll = () => {
       const y = window.scrollY || 0;
       setScrolled(y > 8);
-
       const doc = document.documentElement;
       const scrollTop = doc.scrollTop || document.body.scrollTop || 0;
       const scrollHeight = doc.scrollHeight || 1;
@@ -216,7 +343,6 @@ export default function App() {
       const denom = Math.max(1, scrollHeight - clientHeight);
       setProgress(Math.min(100, Math.max(0, (scrollTop / denom) * 100)));
     };
-
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
@@ -234,7 +360,7 @@ export default function App() {
     }
 
     const msg =
-      `[유니슬렛 무료 방문견적 요청]\n` +
+      `[${BRAND.name} 무료 견적 요청]\n` +
       `이름: ${name}\n` +
       `연락처: ${phone}\n` +
       `지역: ${area}\n` +
@@ -244,7 +370,9 @@ export default function App() {
       await copyToClipboard(msg);
       setToastMsg("요청 내용이 복사되었습니다. 카카오톡에서 붙여넣기만 하시면 됩니다.");
       setToastOpen(true);
-      window.open(KAKAO_CHAT_URL, "_blank", "noopener,noreferrer");
+      setTimeout(() => {
+        window.open(KAKAO_CHAT_URL, "_blank", "noopener,noreferrer");
+      }, 1000);
     } catch {
       setToastMsg("복사에 실패했습니다. 아래 내용을 수동으로 복사해 주세요.");
       setToastOpen(true);
@@ -255,7 +383,7 @@ export default function App() {
   const telHref = `tel:${BRAND.phone.replaceAll("-", "")}`;
 
   return (
-    <div className="min-h-screen bg-stone-50 text-stone-900">
+    <div className="min-h-screen bg-stone-50 text-stone-900 font-sans selection:bg-yellow-200 selection:text-stone-900">
       <Toast open={toastOpen} message={toastMsg} onClose={() => setToastOpen(false)} />
 
       {/* Scroll progress */}
@@ -278,15 +406,18 @@ export default function App() {
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
           <button
             onClick={() => scrollToId("top")}
-            className="flex items-center gap-2 rounded-xl px-2 py-1 text-left"
+            className="flex items-center gap-3 rounded-xl px-2 py-1 text-left group"
             aria-label="홈으로"
           >
-            <div className="grid h-9 w-9 place-items-center rounded-2xl bg-slate-900 text-stone-50">
-              <Sparkles className="h-5 w-5" />
+            {/* THE SLAT Custom Logo (Bar Icon) */}
+            <div className={`flex gap-[3px] transition-colors duration-300 ${scrolled ? 'text-stone-900' : 'text-stone-900 md:text-white'}`}>
+              <div className="w-1.5 h-7 bg-current rounded-sm group-hover:h-5 transition-all duration-300"></div>
+              <div className="w-1.5 h-7 bg-current rounded-sm transition-all duration-300"></div>
+              <div className="w-1.5 h-7 bg-current rounded-sm group-hover:h-5 transition-all duration-300"></div>
             </div>
-            <div className="leading-tight">
-              <div className="text-sm font-extrabold tracking-tight">{BRAND.name}</div>
-              <div className="text-xs text-stone-600">{BRAND.tagline}</div>
+            <div className="leading-none flex flex-col justify-center">
+              <div className={`text-lg font-black tracking-tighter ${scrolled ? 'text-stone-900' : 'text-stone-900 md:text-white'}`}>{BRAND.name}</div>
+              <div className={`text-[9px] tracking-[0.2em] uppercase font-medium ${scrolled ? 'text-stone-500' : 'text-stone-600 md:text-white/80'}`}>PREMIUM UNISLAT</div>
             </div>
           </button>
 
@@ -296,7 +427,7 @@ export default function App() {
                 <button
                   key={n.id}
                   onClick={() => scrollToId(n.id)}
-                  className="rounded-xl px-3 py-2 text-sm text-stone-700 transition hover:bg-stone-100"
+                  className={`rounded-xl px-3 py-2 text-sm transition hover:bg-stone-100 ${scrolled ? 'text-stone-700' : 'text-stone-700 md:text-white/90 md:hover:bg-white/10'}`}
                 >
                   {n.label}
                 </button>
@@ -307,7 +438,7 @@ export default function App() {
               className="bg-yellow-400 text-stone-900 shadow-sm hover:bg-yellow-300"
               onClick={() => scrollToId("cta")}
             >
-              유니슬렛 무료견적
+              무료 견적
               <ArrowUpRight className="h-4 w-4" />
             </Button>
 
@@ -357,44 +488,44 @@ export default function App() {
             aria-hidden="true"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-stone-950/55 via-stone-950/35 to-stone-50" />
-          <div className="relative mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-20">
+          <div className="relative mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-24">
             <div className="max-w-xl">
-              <div className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-3 py-1 text-xs text-stone-50 backdrop-blur">
+              <div className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-3 py-1 text-xs text-stone-50 backdrop-blur mb-6">
                 <MapPin className="h-4 w-4" />
-                {BRAND.serviceArea} 유니슬렛 무료 방문 실측·견적
+                {BRAND.serviceArea} 무료 방문 실측
               </div>
 
-              <h1 className="mt-4 text-3xl font-extrabold tracking-tight text-stone-50 sm:text-5xl">
-                블라인드처럼 조절되고,
-                <span className="block text-yellow-200">버티컬처럼 넓게 열리는 유니슬렛.</span>
+              <h1 className="text-4xl md:text-6xl font-black tracking-tight text-stone-50 mb-6 drop-shadow-sm leading-tight">
+                커튼을 걷지 마세요,<br/>
+                그냥 <span className="text-yellow-400">지나가세요.</span>
               </h1>
 
-              <p className="mt-4 text-base leading-relaxed text-stone-100/90 sm:text-lg">
-                세로 슬랫 구조로 채광·시야·프라이버시를 각도로 조절하고,
-                큰 창/슬라이딩 도어에도 깔끔하게 어울립니다.
+              <p className="text-lg md:text-xl leading-relaxed text-stone-200 mb-8 font-light">
+                블라인드의 기능과 커튼의 우아함을 하나로.<br/>
+                <strong className="text-white font-semibold">유니슬렛(Uni-Slat)</strong>이 거실 생활을 바꿉니다.
               </p>
 
-              <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+              <div className="flex flex-col gap-3 sm:flex-row">
                 <Button
-                  className="bg-yellow-400 text-stone-900 shadow-lg hover:bg-yellow-300"
+                  className="bg-yellow-400 text-stone-900 shadow-lg hover:bg-yellow-300 px-8 py-4 text-base"
                   onClick={() => scrollToId("cta")}
                 >
-                  1분 유니슬렛 상담 신청
+                  무료 견적 신청하기
                   <MessageCircle className="h-5 w-5" />
                 </Button>
                 <Button
                   as="a"
                   href={telHref}
-                  className="border border-white/30 bg-white/10 text-stone-50 hover:bg-white/15"
+                  className="border border-white/30 bg-white/10 text-stone-50 hover:bg-white/15 px-8 py-4 text-base"
                 >
-                  전화로 바로 상담
+                  전화 상담
                   <PhoneCall className="h-5 w-5" />
                 </Button>
               </div>
 
-              <div className="mt-6 flex flex-wrap gap-2">
-                <Chip>무료 실측</Chip>
+              <div className="mt-8 flex flex-wrap gap-2">
                 <Chip>각도 조절</Chip>
+                <Chip>낱장 세탁</Chip>
                 <Chip>대형창 최적</Chip>
                 <Chip>확실한 A/S</Chip>
               </div>
@@ -410,9 +541,9 @@ export default function App() {
                 <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-stone-100">
                   <Ruler className="h-6 w-6 text-slate-900" />
                 </div>
-                <h3 className="text-lg font-bold">무료 방문 실측</h3>
+                <h3 className="text-lg font-bold">유니슬렛 전문 실측</h3>
                 <p className="mt-2 text-sm leading-relaxed text-stone-600">
-                  샘플을 들고 방문해 창 구조/동선까지 보고 제안합니다. 큰 창일수록 실측이 결과를 좌우합니다.
+                  일반 커튼과 다릅니다. 바닥에서 정확히 1cm 띄우는 유니슬렛만의 황금 비율을 찾아드립니다.
                 </p>
               </div>
 
@@ -420,9 +551,9 @@ export default function App() {
                 <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-stone-100">
                   <RotateCw className="h-6 w-6 text-slate-900" />
                 </div>
-                <h3 className="text-lg font-bold">각도(회전)로 정교 조절</h3>
+                <h3 className="text-lg font-bold">180도 채광 조절</h3>
                 <p className="mt-2 text-sm leading-relaxed text-stone-600">
-                  슬랫 각도로 채광과 프라이버시를 동시에 컨트롤합니다. “눈부심은 줄이고, 답답함은 덜고”가 목표입니다.
+                  스틱 하나로 암막부터 쉬폰 느낌까지. 블라인드의 기능과 커튼의 감성을 한 번에 잡았습니다.
                 </p>
               </div>
 
@@ -432,14 +563,17 @@ export default function App() {
                 </div>
                 <h3 className="text-lg font-bold">설치 후까지 책임</h3>
                 <p className="mt-2 text-sm leading-relaxed text-stone-600">
-                  작동감/수평/마감까지 점검하고, 사용 중 이슈는 A/S 정책 기준으로 처리합니다.
+                  작동감/수평/마감까지 점검하고, 사용 중 이슈는 A/S 정책 기준으로 확실하게 처리합니다.
                 </p>
               </div>
             </div>
           </Reveal>
         </section>
 
-        {/* 유니슬렛 소개 + SEO 키워드 */}
+        {/* AI Stylist (NEW) */}
+        <AIStylistSection />
+
+        {/* 유니슬렛 소개 + SEO */}
         <section id="unislat" className="bg-stone-100/60">
           <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
             <Reveal>
@@ -464,57 +598,29 @@ export default function App() {
                     </li>
                     <li className="flex gap-2">
                       <Wind className="mt-0.5 h-5 w-5 text-slate-900" />
-                      <span>세로 슬랫 구조라 답답함이 덜하고, 공간이 길어 보이는 효과가 있습니다.</span>
+                      <span>세로 슬랫 구조라 답답함이 덜하고, 공간이 넓어 보입니다.</span>
                     </li>
                     <li className="flex gap-2">
                       <CheckCircle2 className="mt-0.5 h-5 w-5 text-slate-900" />
-                      <span>제품 옵션에 따라 관리/세탁 편의(분리 청소 등)를 안내할 수 있습니다.</span>
+                      <span>오염된 날개만 쏙 빼서 '낱장 세탁'이 가능합니다.</span>
                     </li>
                   </ul>
-
-                  <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-                    <Button
-                      className="bg-slate-900 text-stone-50 hover:bg-slate-800"
-                      onClick={() => scrollToId("cta")}
-                    >
-                      우리 집에 맞는 유니슬렛 상담
-                      <ChevronRight className="h-5 w-5" />
-                    </Button>
-                    <Button
-                      as="a"
-                      href={telHref}
-                      className="border border-stone-300 bg-white text-stone-800 hover:bg-stone-50"
-                    >
-                      전화 문의
-                      <PhoneCall className="h-5 w-5" />
-                    </Button>
-                  </div>
                 </div>
 
                 <div className="rounded-3xl border border-stone-200 bg-white p-7 shadow-sm">
-                  <h3 className="text-lg font-bold">아파트명 + 유니슬렛 검색 유입</h3>
+                  <h3 className="text-lg font-bold">인기 검색어</h3>
                   <p className="mt-2 text-sm leading-relaxed text-stone-600">
-                    구매 의사가 높은 고객은 “아파트명 + 유니슬렛/스마트커튼”으로 검색합니다.
-                    아래 키워드는 실제 페이지에서 노출되어 검색 폭을 넓히는 용도입니다.
+                    요즘 가장 문의가 많은 아파트와 키워드입니다.
                   </p>
 
                   <div className="mt-4 flex flex-wrap gap-2">
-                    {SEO_KEYWORDS.slice(0, 28).map((t) => (
+                    {SEO_KEYWORDS.slice(0, 20).map((t) => (
                       <Chip key={t}>{t}</Chip>
                     ))}
                   </div>
 
-                  <div className="mt-5 rounded-2xl border border-stone-200 bg-stone-50 p-4">
-                    <div className="text-xs font-semibold text-stone-700">예시 검색어</div>
-                    <div className="mt-2 grid gap-1 text-sm text-stone-700">
-                      <div>해운대 힐스테이트 유니슬렛</div>
-                      <div>명지 더샵 스마트커튼 유니슬렛</div>
-                      <div>센텀 더샵 유니슬렛 견적</div>
-                    </div>
-                  </div>
-
                   <div className="mt-6 text-sm text-stone-600">
-                    운영 팁: 갤러리의 아파트명/스타일을 실제 시공 사례로 교체하면, 검색 유입이 누적됩니다.
+                    * 위 키워드는 예시이며, 실제 시공 사례 업데이트 시 반영됩니다.
                   </div>
                 </div>
               </div>
@@ -529,7 +635,7 @@ export default function App() {
               <div>
                 <h2 className="text-2xl font-extrabold tracking-tight">유니슬렛 시공 갤러리</h2>
                 <p className="mt-2 text-sm text-stone-600">
-                  “내 집과 비슷한 창”을 빠르게 찾도록 아파트명과 사용 목적(채광/프라이버시)을 함께 표기합니다.
+                  더슬렛이 완성한 실제 공간의 분위기를 확인해보세요.
                 </p>
               </div>
               <Button
@@ -543,9 +649,7 @@ export default function App() {
 
             <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {GALLERY.map((g, idx) => {
-                const url = `https://source.unsplash.com/featured/900x700/?${encodeURIComponent(
-                  g.k
-                )}&sig=${gallerySeed + idx}`;
+                const url = img(idx + 1);
                 return (
                   <div
                     key={`${g.apt}-${idx}`}
@@ -554,7 +658,7 @@ export default function App() {
                     <div className="relative h-44 w-full overflow-hidden">
                       <img
                         src={url}
-                        alt={`${g.apt} ${g.style} 유니슬렛 시공`}
+                        alt={`${g.apt} ${g.style}`}
                         className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
                         loading="lazy"
                       />
@@ -569,14 +673,7 @@ export default function App() {
                     <div className="p-4">
                       <div className="text-sm font-bold">{g.style}</div>
                       <div className="mt-1 text-xs text-stone-600">
-                        상담 → 무료 실측 → 맞춤 제작 → 설치 마감 점검
-                      </div>
-                      <div className="mt-3 flex items-center justify-between">
-                        <span className="text-xs text-stone-500">{BRAND.serviceArea}</span>
-                        <span className="text-xs font-semibold text-slate-900">
-                          무료 견적
-                          <ChevronRight className="ml-0.5 inline h-4 w-4" />
-                        </span>
+                        상담 → 실측 → 맞춤제작 → 완벽시공
                       </div>
                     </div>
                   </div>
@@ -664,7 +761,7 @@ export default function App() {
                 {
                   name: "박OO",
                   text:
-                    "설치 후 작동감까지 체크하고 가셔서 믿음이 갔습니다. 사용 팁도 자세히 알려주셔서 편해요.",
+                    "설치 후 작동감까지 체크하고 가셔서 믿음이 갔습니다. 강아지 때문에 낱장 세탁 되는 게 정말 좋아요.",
                 },
               ].map((r) => (
                 <div key={r.name} className="rounded-3xl border border-stone-200 bg-white p-6 shadow-sm">
@@ -681,96 +778,6 @@ export default function App() {
               ))}
             </div>
           </Reveal>
-        </section>
-
-        {/* Guarantee */}
-        <section id="guarantee" className="bg-stone-100/60">
-          <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
-            <Reveal>
-              <div className="grid gap-6 md:grid-cols-2 md:items-center">
-                <div>
-                  <div className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-xs font-semibold text-stone-700 shadow-sm">
-                    <ShieldCheck className="h-4 w-4" />
-                    리스크 제거(보증 정책)
-                  </div>
-                  <h2 className="mt-4 text-2xl font-extrabold tracking-tight">
-                    마지막 망설임을 없애는, 유니슬렛 A/S 보증
-                  </h2>
-                  <p className="mt-3 text-sm leading-relaxed text-stone-700">
-                    “작동이 뻑뻑하면? 수평이 틀어지면?” 같은 불안을 정책으로 해결합니다.
-                    상담에서 보증 범위와 기준을 명확히 안내합니다.
-                  </p>
-
-                  <div className="mt-6 grid gap-3">
-                    <div className="rounded-3xl border border-stone-200 bg-white p-5 shadow-sm">
-                      <div className="flex items-start gap-3">
-                        <div className="mt-0.5 inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-stone-100">
-                          <BadgeCheck className="h-5 w-5 text-slate-900" />
-                        </div>
-                        <div>
-                          <div className="text-sm font-bold">설치 후 30일 작동/마감 점검</div>
-                          <div className="mt-1 text-sm text-stone-600">
-                            초기 사용 중 생기는 미세 조정(1회)을 기준에 따라 처리합니다.
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="rounded-3xl border border-stone-200 bg-white p-5 shadow-sm">
-                      <div className="flex items-start gap-3">
-                        <div className="mt-0.5 inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-stone-100">
-                          <Wrench className="h-5 w-5 text-slate-900" />
-                        </div>
-                        <div>
-                          <div className="text-sm font-bold">1년 무상 A/S(시공 관련)</div>
-                          <div className="mt-1 text-sm text-stone-600">
-                            레일/브라켓/작동 불량 등 시공 관련 이슈는 책임지고 처리합니다.
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="text-xs text-stone-500">
-                      보증 범위는 제품 옵션/설치 환경에 따라 달라질 수 있으며, 상담 시 상세 안내합니다.
-                    </div>
-                  </div>
-                </div>
-
-                <div className="rounded-3xl border border-stone-200 bg-white p-7 shadow-sm">
-                  <h3 className="text-lg font-bold">자주 묻는 질문</h3>
-                  <div className="mt-4 grid gap-3 text-sm">
-                    <div className="rounded-2xl border border-stone-200 bg-stone-50 p-4">
-                      <div className="font-semibold text-stone-800">Q. 유니슬렛이 버티컬이랑 뭐가 달라요?</div>
-                      <div className="mt-2 text-stone-600">
-                        핵심은 “각도 조절 + 넓게 열림”을 생활 동선에 맞게 세팅해준다는 점입니다. 방문 실측에서 창 구조를 보고 추천합니다.
-                      </div>
-                    </div>
-                    <div className="rounded-2xl border border-stone-200 bg-stone-50 p-4">
-                      <div className="font-semibold text-stone-800">Q. 큰 창/베란다문에도 괜찮나요?</div>
-                      <div className="mt-2 text-stone-600">
-                        유니슬렛은 대형창/슬라이딩 도어에서 쓰임이 큰 편이라, 동선과 개폐 방향이 특히 중요합니다.
-                      </div>
-                    </div>
-                    <div className="rounded-2xl border border-stone-200 bg-stone-50 p-4">
-                      <div className="font-semibold text-stone-800">Q. 견적만 받아도 되나요?</div>
-                      <div className="mt-2 text-stone-600">네. 무료 방문 실측/견적만 받아보셔도 됩니다.</div>
-                    </div>
-                  </div>
-
-                  <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-                    <Button className="bg-yellow-400 text-stone-900 hover:bg-yellow-300" onClick={() => scrollToId("cta")}>
-                      지금 무료 상담
-                      <MessageCircle className="h-5 w-5" />
-                    </Button>
-                    <Button as="a" href={telHref} className="border border-stone-300 bg-white text-stone-800 hover:bg-stone-50">
-                      전화하기
-                      <PhoneCall className="h-5 w-5" />
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </Reveal>
-          </div>
         </section>
 
         {/* CTA */}
@@ -798,7 +805,7 @@ export default function App() {
                   <div className="mt-6 rounded-3xl border border-stone-200 bg-stone-50 p-5">
                     <div className="text-xs font-semibold text-stone-700">복사되는 메시지 예시</div>
                     <pre className="mt-2 whitespace-pre-wrap text-xs leading-relaxed text-stone-600">
-{`[유니슬렛 무료 방문견적 요청]
+{`[${BRAND.name} 무료 견적 요청]
 이름: 홍길동
 연락처: 010-1234-5678
 지역: 해운대구
@@ -849,10 +856,6 @@ export default function App() {
                       전화로 빠르게 상담
                       <PhoneCall className="h-5 w-5" />
                     </Button>
-
-                    <div className="text-xs text-stone-500">
-                      버튼을 누르면 새 창에서 카카오톡 오픈채팅이 열립니다.
-                    </div>
                   </div>
                 </div>
               </div>
@@ -876,7 +879,7 @@ export default function App() {
               </div>
             </div>
             <div className="mt-4 text-xs text-stone-500">
-              본 페이지 이미지는 데모용(Unsplash)입니다. 실제 유니슬렛 시공 사진으로 교체하면 전환율이 올라갑니다.
+              본 페이지 이미지는 데모용입니다. 실제 유니슬렛 시공 사진으로 교체하면 전환율이 올라갑니다.
             </div>
           </div>
         </footer>
@@ -890,7 +893,7 @@ export default function App() {
           className="bg-yellow-400 text-stone-900 shadow-lg hover:bg-yellow-300"
         >
           <MessageCircle className="h-5 w-5" />
-          카카오톡
+          카톡
         </Button>
         <Button as="a" href={telHref} className="bg-slate-900 text-stone-50 shadow-lg hover:bg-slate-800">
           <PhoneCall className="h-5 w-5" />
