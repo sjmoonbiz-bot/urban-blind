@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 
 /** [설정] 카카오톡 오픈채팅 링크 & Gemini API 키 */
-const KAKAO_CHAT_URL = "https://open.kakao.com/o/sYourLinkID";
+const KAKAO_CHAT_URL = "https://open.kakao.com/o/sH00Mn6h"; // 사장님 채팅방 링크 적용 완료!
 const GEMINI_API_KEY = ""; // 여기에 API 키를 입력하세요
 
 /** 브랜드 정보 */
@@ -157,7 +157,7 @@ function Toast({ open, message, onClose }) {
       )}
       aria-live="polite"
     >
-      <div className="rounded-2xl border border-stone-200 bg-white/90 px-4 py-3 text-sm text-stone-800 shadow-xl backdrop-blur">
+      <div className="rounded-2xl border border-stone-200 bg-white/90 px-4 py-3 text-sm text-stone-800 shadow-xl backdrop-blur whitespace-nowrap">
         {message}
       </div>
     </div>
@@ -380,6 +380,24 @@ export default function App() {
     }
   };
 
+  /** 전화 버튼 클릭 핸들러 (PC/모바일 분기 처리) */
+  const handlePhoneClick = async (e) => {
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth < 768;
+    
+    // 모바일이 아닐 경우(PC), 전화번호를 복사하거나 보여줌
+    if (!isMobile) {
+      e.preventDefault(); // 기본 전화 걸기 방지
+      try {
+        await copyToClipboard(BRAND.phone);
+        setToastMsg(`전화번호가 복사되었습니다: ${BRAND.phone}`);
+      } catch {
+        setToastMsg(`상담 전화: ${BRAND.phone}`);
+      }
+      setToastOpen(true);
+    }
+    // 모바일이면 href="tel:..."이 그대로 작동하여 전화 앱이 열림
+  };
+
   const telHref = `tel:${BRAND.phone.replaceAll("-", "")}`;
 
   return (
@@ -516,6 +534,7 @@ export default function App() {
                 <Button
                   as="a"
                   href={telHref}
+                  onClick={handlePhoneClick}
                   className="border border-white/30 bg-white/10 text-stone-50 hover:bg-white/15 px-8 py-4 text-base"
                 >
                   전화 상담
@@ -570,7 +589,7 @@ export default function App() {
           </Reveal>
         </section>
 
-        {/* AI Stylist (NEW) */}
+        {/* AI Stylist */}
         <AIStylistSection />
 
         {/* 유니슬렛 소개 + SEO */}
@@ -605,6 +624,25 @@ export default function App() {
                       <span>오염된 날개만 쏙 빼서 '낱장 세탁'이 가능합니다.</span>
                     </li>
                   </ul>
+
+                  <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+                    <Button
+                      className="bg-slate-900 text-stone-50 hover:bg-slate-800"
+                      onClick={() => scrollToId("cta")}
+                    >
+                      우리 집에 맞는 유니슬렛 상담
+                      <ChevronRight className="h-5 w-5" />
+                    </Button>
+                    <Button
+                      as="a"
+                      href={telHref}
+                      onClick={handlePhoneClick}
+                      className="border border-stone-300 bg-white text-stone-800 hover:bg-stone-50"
+                    >
+                      전화 문의
+                      <PhoneCall className="h-5 w-5" />
+                    </Button>
+                  </div>
                 </div>
 
                 <div className="rounded-3xl border border-stone-200 bg-white p-7 shadow-sm">
@@ -617,6 +655,15 @@ export default function App() {
                     {SEO_KEYWORDS.slice(0, 20).map((t) => (
                       <Chip key={t}>{t}</Chip>
                     ))}
+                  </div>
+
+                  <div className="mt-5 rounded-2xl border border-stone-200 bg-stone-50 p-4">
+                    <div className="text-xs font-semibold text-stone-700">예시 검색어</div>
+                    <div className="mt-2 grid gap-1 text-sm text-stone-700">
+                      <div>해운대 힐스테이트 유니슬렛</div>
+                      <div>명지 더샵 스마트커튼 유니슬렛</div>
+                      <div>센텀 더샵 유니슬렛 견적</div>
+                    </div>
                   </div>
 
                   <div className="mt-6 text-sm text-stone-600">
@@ -852,10 +899,19 @@ export default function App() {
                       <MessageCircle className="h-5 w-5" />
                     </Button>
 
-                    <Button as="a" href={telHref} className="w-full bg-slate-900 text-stone-50 hover:bg-slate-800">
+                    <Button 
+                      as="a" 
+                      href={telHref} 
+                      onClick={handlePhoneClick}
+                      className="w-full bg-slate-900 text-stone-50 hover:bg-slate-800"
+                    >
                       전화로 빠르게 상담
                       <PhoneCall className="h-5 w-5" />
                     </Button>
+
+                    <div className="text-xs text-stone-500">
+                      버튼을 누르면 새 창에서 카카오톡 오픈채팅이 열립니다.
+                    </div>
                   </div>
                 </div>
               </div>
@@ -869,7 +925,7 @@ export default function App() {
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div className="font-semibold text-stone-800">{BRAND.name}</div>
               <div className="flex flex-wrap gap-3">
-                <a className="hover:text-stone-900" href={telHref}>
+                <a className="hover:text-stone-900" href={telHref} onClick={handlePhoneClick}>
                   {BRAND.phone}
                 </a>
                 <span className="text-stone-300">|</span>
@@ -895,7 +951,12 @@ export default function App() {
           <MessageCircle className="h-5 w-5" />
           카톡
         </Button>
-        <Button as="a" href={telHref} className="bg-slate-900 text-stone-50 shadow-lg hover:bg-slate-800">
+        <Button 
+          as="a" 
+          href={telHref} 
+          onClick={handlePhoneClick}
+          className="bg-slate-900 text-stone-50 shadow-lg hover:bg-slate-800"
+        >
           <PhoneCall className="h-5 w-5" />
           전화
         </Button>
