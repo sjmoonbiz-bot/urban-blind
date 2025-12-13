@@ -24,10 +24,10 @@ const KAKAO_CHAT_URL = "https://open.kakao.com/o/여기에_오픈채팅_링크";
 
 /** 운영 정보(필요하면 수정) */
 const BRAND = {
-  name: "어반블라인드",
+  name: "더슬렛",
   tagline: "유니슬렛(스마트커튼) 전문 방문견적",
   serviceArea: "부산 전지역",
-  phone: "010-0000-0000",
+  phone: "010-7534-2913",
   bizHours: "매일 09:00-20:00",
 };
 
