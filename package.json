@@ -6,49 +6,20 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "lint": "eslint .",
     "preview": "vite preview"
   },
   "dependencies": {
-    "firebase": "^10.8.0",
-    "lucide-react": "^0.344.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "lucide-react": "^0.468.0"
   },
   "devDependencies": {
-    "@types/react": "^18.2.64",
-    "@types/react-dom": "^18.2.21",
-    "@vitejs/plugin-react": "^4.2.1",
-    "autoprefixer": "^10.4.18",
-    "eslint": "^8.57.0",
-    "eslint-plugin-react": "^7.34.0",
-    "eslint-plugin-react-hooks": "^4.6.0",
-    "eslint-plugin-react-refresh": "^0.4.5",
-    "postcss": "^8.4.35",
-    "tailwindcss": "3.4.1",
-    "vite": "^5.1.4"
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.49",
+    "tailwindcss": "3.4.17",
+    "vite": "^5.4.10"
   }
 }
-```
-
-### 🚀 2. 꼬인 족보 삭제 (`package-lock.json`)
-
-VS Code 왼쪽 파일 목록에서 **`package-lock.json`** 이라는 파일을 찾으세요.
-* **우클릭 -> Delete (삭제)** 해버리세요. (과감하게!)
-* 이 파일은 꼬인 정보를 담고 있어서 없애야 합니다. (나중에 자동으로 다시 생깁니다.)
-
-### 🚀 3. 재설치 및 업로드
-
-이제 터미널(검은 화면)에 아래 명령어 3개를 순서대로 입력하세요.
-
-**1. 깨끗하게 다시 설치하기**
-```bash
-npm install
-```
-
-**2. GitHub에 반영하기**
-(설치가 다 끝나면 아래 두 줄을 입력하세요)
-```bash
-git add .
-git commit -m "버전 완벽 고정"
-git push
