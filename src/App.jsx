@@ -381,18 +381,13 @@ export default function App() {
   };
 
   /** 전화 버튼 클릭 핸들러 (PC/모바일 분기 처리) */
-  const handlePhoneClick = async (e) => {
+  const handlePhoneClick = (e) => {
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth < 768;
     
-    // 모바일이 아닐 경우(PC), 전화번호를 복사하거나 보여줌
+    // 모바일이 아닐 경우(PC), 전화번호를 복사하지 않고 알림으로 띄움
     if (!isMobile) {
       e.preventDefault(); // 기본 전화 걸기 방지
-      try {
-        await copyToClipboard(BRAND.phone);
-        setToastMsg(`전화번호가 복사되었습니다: ${BRAND.phone}`);
-      } catch {
-        setToastMsg(`상담 전화: ${BRAND.phone}`);
-      }
+      setToastMsg(`📞 상담 전화번호: ${BRAND.phone}`);
       setToastOpen(true);
     }
     // 모바일이면 href="tel:..."이 그대로 작동하여 전화 앱이 열림
