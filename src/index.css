@@ -4,3 +4,4 @@
 
 html, body { height: 100%; }
 body { background: #f6f1e8; }
+body { font-family: "Noto Sans KR", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif; }
