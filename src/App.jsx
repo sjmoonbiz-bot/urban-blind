@@ -1,26 +1,49 @@
 import React, { useEffect, useMemo, useState } from "react";
 import {
-  CheckCircle2,
   ArrowUpRight,
-  PhoneCall,
-  MessageCircle,
-  X,
-  Flame,
+  CheckCircle2,
   ClipboardCheck,
+  Flame,
+  MessageCircle,
+  PhoneCall,
   Star,
+  X,
 } from "lucide-react";
 
-/** 실전 설정 */
-const BRAND = { name: "더슬렛", product: "유니슬렛" };
-const CONTACT = { tel: "010-7534-2913", kakaoUrl: "https://open.kakao.com/o/sH00Mn6h" };
+/**
+ * BRAND / CONTACT
+ */
+const BRAND = {
+  name: "더슬렛",
+  product: "유니슬렛",
+  tagline: "Premium Window Styling",
+};
+
+const CONTACT = {
+  tel: "010-7534-2913",
+  kakaoUrl: "https://open.kakao.com/o/sH00Mn6h",
+};
 
 /**
- * ⚠️ 견적 “원 단위” 노출 안전장치
- * - 단가를 넣지 않으면(0) 숫자는 숨기고 “상담으로 범위 안내”만 표시합니다.
+ * THEME (High-end)
+ * Deep Charcoal + Champagne Gold + Warm Greige
+ */
+const THEME = {
+  charcoal: "#1c1917",
+  gold: "#d4af37",
+  greige: "#e5e0d8",
+  ivory: "#fbfaf7",
+  ink: "#12100f",
+};
+
+/**
+ * VIP Estimate model
+ * - BASE_PER_M2 / INSTALL_BASE 값을 0이 아닌 실제 단가로 넣으면 “원 단위 범위” 자동 표시
+ * - 0이면 숫자는 숨기고 “VIP 견적서 발행(상담)” 흐름으로 작동(허위 가격 노출 방지)
  */
 const ESTIMATE_MODEL = {
-  BASE_PER_M2: 0,     // 예: 190000
-  INSTALL_BASE: 0,    // 예: 120000
+  BASE_PER_M2: 0, // 예: 190000
+  INSTALL_BASE: 0, // 예: 120000
   ERROR_RATE: 0.12,
   OPTION_MULTIPLIERS: {
     fabricPremium: 1.12,
@@ -30,99 +53,153 @@ const ESTIMATE_MODEL = {
   },
 };
 
-/** public 기준 (없어도 fallback 처리) */
-const MEDIA = {
-  heroVideoMp4: "/media/hero.mp4",
-  heroImage: "/images/hero.webp",
+/**
+ * Unsplash (high-res)
+ * - “연출 이미지(예시)”로 사용하는 것을 권장 (실제 시공 전/후는 반드시 실제 사진으로 교체)
+ */
+const UNSPLASH = {
+  hero: "https://source.unsplash.com/featured/2400x1400/?luxury%20interior,minimal%20living%20room",
   gallery: [
-    { label: "BEFORE", title: "교체 전", src: "/images/before-1.webp" },
-    { label: "AFTER", title: "교체 후", src: "/images/after-1.webp" },
-    { label: "BEFORE", title: "교체 전", src: "/images/before-2.webp" },
-    { label: "AFTER", title: "교체 후", src: "/images/after-2.webp" },
+    "https://source.unsplash.com/featured/1600x1100/?luxury%20living%20room,minimal",
+    "https://source.unsplash.com/featured/1600x1100/?hotel%20lounge,interior",
+    "https://source.unsplash.com/featured/1600x1100/?modern%20living%20room,neutral",
+    "https://source.unsplash.com/featured/1600x1100/?high-end%20interior,curtains",
   ],
-};
-
-const THEME = {
-  greige: "#f3eee6",
-  navy: "#0b1f3b",
-  navy2: "#102a4d",
-  ink: "#141414",
 };
 
 function cn(...c) {
   return c.filter(Boolean).join(" ");
 }
+
 function formatKRW(n) {
   if (!Number.isFinite(n)) return "-";
   return n.toLocaleString("ko-KR") + "원";
 }
+
 function scrollToId(id) {
   document.getElementById(id)?.scrollIntoView?.({ behavior: "smooth", block: "start" });
-}
-
-function CTAButton({ children, onClick, href, variant = "primary", className = "" }) {
-  const base =
-    "inline-flex w-full items-center justify-center gap-2 rounded-2xl px-5 py-3 text-base transition-transform duration-150 sm:w-auto";
-  const motion = "hover:scale-105 active:scale-95";
-  const styles =
-    variant === "primary"
-      ? `bg-[${THEME.navy}] text-white hover:bg-[${THEME.navy2}]`
-      : variant === "outline"
-      ? `border border-[${THEME.navy}]/25 bg-white/70 text-[${THEME.navy}] hover:bg-white`
-      : "bg-white/80 text-neutral-900 border border-neutral-200 hover:bg-white";
-
-  const textWeight = variant === "primary" ? "font-semibold" : "font-medium";
-
-  if (href) {
-    return (
-      <a className={cn(base, motion, textWeight, styles, className)} href={href}>
-        {children} <ArrowUpRight className="h-4 w-4" />
-      </a>
-    );
-  }
-  return (
-    <button className={cn(base, motion, textWeight, styles, className)} onClick={onClick} type="button">
-      {children} <ArrowUpRight className="h-4 w-4" />
-    </button>
-  );
 }
 
 function SafeImage({ src, alt, className = "" }) {
   const [ok, setOk] = useState(Boolean(src));
   if (ok && src) {
-    return <img src={src} alt={alt} loading="lazy" onError={() => setOk(false)} className={className} />;
+    return (
+      <img
+        src={src}
+        alt={alt}
+        loading="lazy"
+        onError={() => setOk(false)}
+        className={className}
+      />
+    );
   }
   return (
     <div
       role="img"
       aria-label={alt}
-      className={cn("bg-gradient-to-br from-neutral-200/60 via-white/40 to-neutral-100/60", className)}
+      className={cn(
+        "bg-gradient-to-br from-neutral-200/70 via-white/60 to-neutral-100/60",
+        className
+      )}
     />
   );
 }
 
-/** 희소성 배너 (닫기 가능) */
-function ScarcityBanner() {
-  const KEY = "the_slat_scarcity_closed_v2";
+/**
+ * Luxury typography injection (single-file requirement)
+ */
+function useLuxuryFonts() {
+  useEffect(() => {
+    const id = "the-slat-fonts";
+    if (document.getElementById(id)) return;
+
+    const pre1 = document.createElement("link");
+    pre1.rel = "preconnect";
+    pre1.href = "https://fonts.googleapis.com";
+
+    const pre2 = document.createElement("link");
+    pre2.rel = "preconnect";
+    pre2.href = "https://fonts.gstatic.com";
+    pre2.crossOrigin = "anonymous";
+
+    const link = document.createElement("link");
+    link.id = id;
+    link.rel = "stylesheet";
+    link.href =
+      "https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600&family=Noto+Serif+KR:wght@300;400;500;600&display=swap";
+
+    document.head.appendChild(pre1);
+    document.head.appendChild(pre2);
+    document.head.appendChild(link);
+
+    const style = document.createElement("style");
+    style.id = "the-slat-font-css";
+    style.innerHTML = `
+      :root { --charcoal:${THEME.charcoal}; --gold:${THEME.gold}; --greige:${THEME.greige}; --ivory:${THEME.ivory}; --ink:${THEME.ink}; }
+      body { background: var(--greige); color: var(--ink); font-family: "Noto Sans KR", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Apple SD Gothic Neo","Malgun Gothic", sans-serif; }
+      .slat-display { font-family: "Noto Serif KR", ui-serif, Georgia, "Times New Roman", serif; letter-spacing: -0.02em; }
+      .slat-body { font-family: "Noto Sans KR", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Apple SD Gothic Neo","Malgun Gothic", sans-serif; }
+    `;
+    document.head.appendChild(style);
+
+    return () => {
+      // keep fonts for navigation; do not remove
+    };
+  }, []);
+}
+
+function Button({ children, onClick, href, variant = "primary", className = "" }) {
+  const base =
+    "inline-flex w-full items-center justify-center gap-2 rounded-2xl px-6 py-3 text-[15px] transition-transform duration-150 sm:w-auto";
+  const motion = "hover:scale-[1.02] active:scale-[0.98]";
+  const styles =
+    variant === "primary"
+      ? `bg-[${THEME.charcoal}] text-[${THEME.ivory}] hover:brightness-[1.08]`
+      : variant === "gold"
+      ? `bg-[${THEME.gold}] text-[${THEME.charcoal}] hover:brightness-[1.05]`
+      : variant === "outline"
+      ? `border border-[${THEME.charcoal}]/25 bg-white/60 text-[${THEME.charcoal}] hover:bg-white`
+      : "bg-white/70 text-neutral-900 border border-neutral-200 hover:bg-white";
+
+  const weight = variant === "gold" ? "font-semibold" : "font-medium";
+
+  if (href) {
+    return (
+      <a className={cn(base, motion, weight, styles, className)} href={href}>
+        {children} <ArrowUpRight className="h-4 w-4" />
+      </a>
+    );
+  }
+  return (
+    <button className={cn(base, motion, weight, styles, className)} onClick={onClick} type="button">
+      {children} <ArrowUpRight className="h-4 w-4" />
+    </button>
+  );
+}
+
+function TopNotice() {
+  const KEY = "the_slat_notice_closed_lux_v1";
   const [open, setOpen] = useState(true);
 
   useEffect(() => {
-    const closed = localStorage.getItem(KEY) === "1";
-    if (closed) setOpen(false);
+    if (localStorage.getItem(KEY) === "1") setOpen(false);
   }, []);
 
   if (!open) return null;
 
   return (
-    <div className="w-full border-b border-neutral-200/70 bg-white/75 backdrop-blur">
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-2">
-        <div className="text-sm font-medium text-neutral-800">
-          📢 이번 달 <span className="font-semibold text-[var(--navy)]">무료 실측 혜택</span>, 현재{" "}
-          <span className="font-semibold text-[var(--navy)]">3자리</span> 남았습니다.
+    <div className="w-full border-b border-neutral-200/70 bg-white/65 backdrop-blur">
+      <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
+        <div className="text-sm font-light text-neutral-800">
+          <span className="font-medium" style={{ color: THEME.charcoal }}>
+            {BRAND.tagline}
+          </span>{" "}
+          · 이번 달 <span style={{ color: THEME.gold, fontWeight: 600 }}>무료 실측 혜택</span> 잔여{" "}
+          <span style={{ color: THEME.charcoal, fontWeight: 600 }}>3팀</span>
         </div>
         <button
           type="button"
-          className="rounded-xl border border-neutral-200 bg-white px-2 py-1 text-neutral-700 hover:bg-neutral-50"
+          className="rounded-xl border border-neutral-200 bg-white/80 px-2 py-1 text-neutral-700 hover:bg-white"
           onClick={() => {
             localStorage.setItem(KEY, "1");
             setOpen(false);
@@ -137,26 +214,39 @@ function ScarcityBanner() {
   );
 }
 
-/** 3초 견적 + 밴드왜건 + 보상 CTA */
-function QuickEstimate() {
+function Badge({ children }) {
+  return (
+    <span
+      className="rounded-full border px-3 py-1 text-[11px] font-medium"
+      style={{
+        borderColor: "rgba(255,255,255,0.22)",
+        background: "rgba(255,255,255,0.10)",
+        color: "rgba(255,255,255,0.90)",
+      }}
+    >
+      {children}
+    </span>
+  );
+}
+
+function VIPEstimateCard() {
   const [inputs, setInputs] = useState({
     widthCm: 240,
     heightCm: 230,
     count: 1,
     space: "거실",
-    fabric: "프리미엄",
-    blackout: "보통",
-    pet: "있음",
-    ceiling: "보통",
+    fabric: "Signature",
+    blackout: "Standard",
+    pet: "No",
+    ceiling: "Standard",
   });
 
-  const [todayCount, setTodayCount] = useState(17);
-  useEffect(() => {
-    const n = 14 + Math.floor(Math.random() * 16); // 14~29
-    setTodayCount(n);
-  }, []);
-
   const canShowNumbers = ESTIMATE_MODEL.BASE_PER_M2 > 0 && ESTIMATE_MODEL.INSTALL_BASE > 0;
+
+  const [issueCount, setIssueCount] = useState(17);
+  useEffect(() => {
+    setIssueCount(12 + Math.floor(Math.random() * 18)); // 12~29
+  }, []);
 
   const estimate = useMemo(() => {
     const w = Math.max(60, Number(inputs.widthCm) || 0) / 100;
@@ -165,101 +255,141 @@ function QuickEstimate() {
     const area = w * h * c;
 
     let mult = 1;
-    if (inputs.fabric === "프리미엄") mult *= ESTIMATE_MODEL.OPTION_MULTIPLIERS.fabricPremium;
-    if (inputs.blackout === "강함") mult *= ESTIMATE_MODEL.OPTION_MULTIPLIERS.blackout;
-    if (inputs.pet === "있음") mult *= ESTIMATE_MODEL.OPTION_MULTIPLIERS.pet;
-    if (inputs.ceiling === "높음") mult *= ESTIMATE_MODEL.OPTION_MULTIPLIERS.highCeiling;
+    if (inputs.fabric === "Signature") mult *= ESTIMATE_MODEL.OPTION_MULTIPLIERS.fabricPremium;
+    if (inputs.blackout === "Enhanced") mult *= ESTIMATE_MODEL.OPTION_MULTIPLIERS.blackout;
+    if (inputs.pet === "Yes") mult *= ESTIMATE_MODEL.OPTION_MULTIPLIERS.pet;
+    if (inputs.ceiling === "High") mult *= ESTIMATE_MODEL.OPTION_MULTIPLIERS.highCeiling;
 
     const raw = area * ESTIMATE_MODEL.BASE_PER_M2 * mult + ESTIMATE_MODEL.INSTALL_BASE;
     const min = Math.round(raw * (1 - ESTIMATE_MODEL.ERROR_RATE));
     const max = Math.round(raw * (1 + ESTIMATE_MODEL.ERROR_RATE));
 
     const memo =
-      `[${BRAND.name} ${BRAND.product} 상담 메모]\n` +
+      `[${BRAND.name} ${BRAND.product} VIP 예상 견적서 요청]\n` +
       `공간: ${inputs.space}\n` +
       `창: ${c}개\n` +
       `사이즈: ${Math.round(w * 100)} x ${Math.round(h * 100)} cm\n` +
-      `원단: ${inputs.fabric}\n` +
+      `컬렉션: ${inputs.fabric}\n` +
       `차광: ${inputs.blackout}\n` +
       `반려동물: ${inputs.pet}\n` +
-      `천장/대형창: ${inputs.ceiling}\n` +
-      `요청: (사진 1~2장 첨부)\n`;
+      `천장: ${inputs.ceiling}\n` +
+      `첨부: (거실/창 사진 1~2장)\n`;
 
     return { area, min, max, memo, canShowNumbers };
   }, [inputs]);
 
-  async function copyAndNudge() {
+  async function copyAndGo() {
     try {
       await navigator.clipboard.writeText(estimate.memo);
     } catch {
-      // 모바일 정책으로 실패 가능
+      // ignore
     } finally {
       scrollToId("offer");
     }
   }
 
   return (
-    <div className="mt-10 overflow-hidden rounded-3xl border border-neutral-200/70 bg-white/65 shadow-sm backdrop-blur">
-      <div className="p-6 sm:p-8">
+    <div className="mt-10 overflow-hidden rounded-[28px] border border-neutral-200/70 bg-white/55 shadow-[0_10px_30px_rgba(0,0,0,0.06)] backdrop-blur">
+      <div className="p-7 sm:p-10">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <div className="text-xs font-medium text-neutral-500">3초 견적</div>
-            <div className="mt-2 text-base font-medium text-neutral-800">
-              <Flame className="mr-1 inline h-4 w-4" style={{ color: THEME.navy }} />
-              오늘 <span className="font-semibold" style={{ color: THEME.navy }}>{todayCount}명</span>이 내 집 견적을 확인했습니다
+            <div className="text-[11px] font-medium text-neutral-500">VIP 예상 견적서</div>
+            <div className="mt-2 text-base font-light text-neutral-800">
+              <Flame className="mr-1 inline h-4 w-4" style={{ color: THEME.gold }} />
+              오늘 <span className="font-medium">{issueCount}건</span>의 예상 견적서가 발행되었습니다
             </div>
           </div>
-          <div className="text-xs text-neutral-500">* 표시값은 로딩 기준</div>
+          <div className="text-[11px] font-light text-neutral-500">* 표시값은 로딩 기준</div>
         </div>
 
-        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
-          {/* 결과 카드 */}
-          <div className="rounded-3xl p-6 text-white" style={{ background: THEME.navy }}>
-            <div className="text-xs text-white/75">예상 범위 (실측 전)</div>
+        <div className="mt-7 grid grid-cols-1 gap-5 sm:grid-cols-2">
+          {/* VIP sheet */}
+          <div
+            className="rounded-[26px] border p-7"
+            style={{
+              borderColor: "rgba(28,25,23,0.16)",
+              background: `linear-gradient(180deg, rgba(255,255,255,0.72), rgba(255,255,255,0.50))`,
+            }}
+          >
+            <div className="flex items-center justify-between">
+              <div className="text-[11px] font-medium text-neutral-600">ESTIMATE RANGE</div>
+              <span
+                className="rounded-full border px-3 py-1 text-[11px] font-medium"
+                style={{
+                  borderColor: "rgba(212,175,55,0.45)",
+                  color: THEME.charcoal,
+                  background: "rgba(212,175,55,0.16)",
+                }}
+              >
+                Signature
+              </span>
+            </div>
 
-            {estimate.canShowNumbers ? (
-              <div className="mt-2 text-2xl font-semibold">
-                {formatKRW(estimate.min)} ~ {formatKRW(estimate.max)}
+            <div className="mt-4">
+              {estimate.canShowNumbers ? (
+                <>
+                  <div className="slat-display text-3xl font-medium" style={{ color: THEME.charcoal }}>
+                    {formatKRW(estimate.min)} ~ {formatKRW(estimate.max)}
+                  </div>
+                  <div className="mt-2 text-sm font-light text-neutral-700">
+                    입력 조건 기준 · 면적 약 {estimate.area.toFixed(1)}m²
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="slat-display text-2xl font-medium" style={{ color: THEME.charcoal }}>
+                    견적서 발행 준비 완료
+                  </div>
+                  <div className="mt-2 text-sm font-light text-neutral-700">
+                    정확한 범위는 상담 후 “VIP 예상 견적서”로 안내드립니다.
+                  </div>
+                  <div className="mt-3 text-[12px] font-light text-neutral-500">
+                    (단가를 설정하면 여기서 원 단위 범위가 자동 표시됩니다.)
+                  </div>
+                </>
+              )}
+            </div>
+
+            <div
+              className="mt-6 rounded-2xl border p-4 text-sm"
+              style={{
+                borderColor: "rgba(28,25,23,0.12)",
+                background: "rgba(251,250,247,0.65)",
+              }}
+            >
+              <div className="text-[12px] font-medium" style={{ color: THEME.charcoal }}>
+                안내
               </div>
-            ) : (
-              <>
-                <div className="mt-2 text-xl font-semibold">입력 완료</div>
-                <div className="mt-1 text-sm text-white/80">
-                  이 조건으로 “품격 옵션 포함” 범위를 안내드립니다.
-                </div>
-              </>
-            )}
-
-            <div className="mt-4 rounded-2xl bg-white/10 p-4 text-sm text-white/85">
-              <div className="font-semibold">혜택 상태</div>
-              <div className="mt-1 text-xs text-white/75">
-                견적 확인 후 상담하면, 안내 속도가 달라집니다.
+              <div className="mt-1 text-[12px] font-light text-neutral-700">
+                최종 금액은 창 구조/레일/원단/시공 난이도에 따라 실측 후 확정됩니다.
               </div>
             </div>
 
-            <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-              <CTAButton href={CONTACT.kakaoUrl} variant="outline" className="sm:flex-1">
+            <div className="mt-5 flex flex-col gap-2 sm:flex-row">
+              <Button href={CONTACT.kakaoUrl} variant="outline" className="sm:flex-1">
                 카톡 상담
-              </CTAButton>
-              <CTAButton onClick={copyAndNudge} variant="primary" className="sm:flex-1">
-                🎁 이 견적으로 혜택 받고 상담하기 <ClipboardCheck className="h-4 w-4" />
-              </CTAButton>
-            </div>
-
-            <div className="mt-3 text-xs text-white/70">
-              * 최종 금액은 창 구조/레일/원단/시공 난이도에 따라 실측 후 확정됩니다.
+              </Button>
+              <Button onClick={copyAndGo} variant="gold" className="sm:flex-1">
+                🎁 VIP 견적서로 상담 예약 <ClipboardCheck className="h-4 w-4" />
+              </Button>
             </div>
           </div>
 
-          {/* 입력 폼 */}
-          <div className="rounded-3xl border border-neutral-200/70 bg-[#efe9df] p-6">
+          {/* Inputs */}
+          <div
+            className="rounded-[26px] border p-7"
+            style={{
+              borderColor: "rgba(28,25,23,0.12)",
+              background: "rgba(229,224,216,0.55)",
+            }}
+          >
             <div className="grid grid-cols-2 gap-3">
               <div className="col-span-2">
-                <label className="text-xs font-medium text-neutral-700">설치 공간</label>
+                <label className="text-[11px] font-medium text-neutral-700">공간</label>
                 <select
                   value={inputs.space}
                   onChange={(e) => setInputs((p) => ({ ...p, space: e.target.value }))}
-                  className="mt-1 w-full rounded-2xl border border-neutral-200 bg-white px-4 py-3 text-sm outline-none focus:border-neutral-400"
+                  className="mt-1 w-full rounded-2xl border border-neutral-200 bg-white/80 px-4 py-3 text-sm outline-none focus:border-neutral-400"
                 >
                   <option>거실</option>
                   <option>안방</option>
@@ -270,109 +400,117 @@ function QuickEstimate() {
               </div>
 
               <div>
-                <label className="text-xs font-medium text-neutral-700">가로(cm)</label>
+                <label className="text-[11px] font-medium text-neutral-700">가로(cm)</label>
                 <input
                   value={inputs.widthCm}
                   onChange={(e) => setInputs((p) => ({ ...p, widthCm: e.target.value }))}
                   inputMode="numeric"
-                  className="mt-1 w-full rounded-2xl border border-neutral-200 bg-white px-4 py-3 text-sm outline-none focus:border-neutral-400"
-                />
-              </div>
-              <div>
-                <label className="text-xs font-medium text-neutral-700">세로(cm)</label>
-                <input
-                  value={inputs.heightCm}
-                  onChange={(e) => setInputs((p) => ({ ...p, heightCm: e.target.value }))}
-                  inputMode="numeric"
-                  className="mt-1 w-full rounded-2xl border border-neutral-200 bg-white px-4 py-3 text-sm outline-none focus:border-neutral-400"
+                  className="mt-1 w-full rounded-2xl border border-neutral-200 bg-white/80 px-4 py-3 text-sm outline-none focus:border-neutral-400"
                 />
               </div>
 
               <div>
-                <label className="text-xs font-medium text-neutral-700">창 개수</label>
+                <label className="text-[11px] font-medium text-neutral-700">세로(cm)</label>
+                <input
+                  value={inputs.heightCm}
+                  onChange={(e) => setInputs((p) => ({ ...p, heightCm: e.target.value }))}
+                  inputMode="numeric"
+                  className="mt-1 w-full rounded-2xl border border-neutral-200 bg-white/80 px-4 py-3 text-sm outline-none focus:border-neutral-400"
+                />
+              </div>
+
+              <div>
+                <label className="text-[11px] font-medium text-neutral-700">창 개수</label>
                 <select
                   value={inputs.count}
                   onChange={(e) => setInputs((p) => ({ ...p, count: e.target.value }))}
-                  className="mt-1 w-full rounded-2xl border border-neutral-200 bg-white px-4 py-3 text-sm outline-none focus:border-neutral-400"
+                  className="mt-1 w-full rounded-2xl border border-neutral-200 bg-white/80 px-4 py-3 text-sm outline-none focus:border-neutral-400"
                 >
                   {[1, 2, 3, 4, 5].map((n) => (
-                    <option key={n} value={n}>{n}개</option>
+                    <option key={n} value={n}>
+                      {n}개
+                    </option>
                   ))}
                 </select>
               </div>
 
               <div>
-                <label className="text-xs font-medium text-neutral-700">원단</label>
+                <label className="text-[11px] font-medium text-neutral-700">컬렉션</label>
                 <select
                   value={inputs.fabric}
                   onChange={(e) => setInputs((p) => ({ ...p, fabric: e.target.value }))}
-                  className="mt-1 w-full rounded-2xl border border-neutral-200 bg-white px-4 py-3 text-sm outline-none focus:border-neutral-400"
+                  className="mt-1 w-full rounded-2xl border border-neutral-200 bg-white/80 px-4 py-3 text-sm outline-none focus:border-neutral-400"
                 >
-                  <option>스탠다드</option>
-                  <option>프리미엄</option>
+                  <option value="Signature">Signature</option>
+                  <option value="Standard">Standard</option>
                 </select>
               </div>
 
               <div>
-                <label className="text-xs font-medium text-neutral-700">차광</label>
+                <label className="text-[11px] font-medium text-neutral-700">차광</label>
                 <select
                   value={inputs.blackout}
                   onChange={(e) => setInputs((p) => ({ ...p, blackout: e.target.value }))}
-                  className="mt-1 w-full rounded-2xl border border-neutral-200 bg-white px-4 py-3 text-sm outline-none focus:border-neutral-400"
+                  className="mt-1 w-full rounded-2xl border border-neutral-200 bg-white/80 px-4 py-3 text-sm outline-none focus:border-neutral-400"
                 >
-                  <option>보통</option>
-                  <option>강함</option>
+                  <option value="Standard">Standard</option>
+                  <option value="Enhanced">Enhanced</option>
                 </select>
               </div>
 
               <div>
-                <label className="text-xs font-medium text-neutral-700">반려동물</label>
+                <label className="text-[11px] font-medium text-neutral-700">반려동물</label>
                 <select
                   value={inputs.pet}
                   onChange={(e) => setInputs((p) => ({ ...p, pet: e.target.value }))}
-                  className="mt-1 w-full rounded-2xl border border-neutral-200 bg-white px-4 py-3 text-sm outline-none focus:border-neutral-400"
+                  className="mt-1 w-full rounded-2xl border border-neutral-200 bg-white/80 px-4 py-3 text-sm outline-none focus:border-neutral-400"
                 >
-                  <option>있음</option>
-                  <option>없음</option>
+                  <option value="No">No</option>
+                  <option value="Yes">Yes</option>
                 </select>
               </div>
 
               <div className="col-span-2">
-                <label className="text-xs font-medium text-neutral-700">천장/대형창</label>
+                <label className="text-[11px] font-medium text-neutral-700">천장</label>
                 <select
                   value={inputs.ceiling}
                   onChange={(e) => setInputs((p) => ({ ...p, ceiling: e.target.value }))}
-                  className="mt-1 w-full rounded-2xl border border-neutral-200 bg-white px-4 py-3 text-sm outline-none focus:border-neutral-400"
+                  className="mt-1 w-full rounded-2xl border border-neutral-200 bg-white/80 px-4 py-3 text-sm outline-none focus:border-neutral-400"
                 >
-                  <option>보통</option>
-                  <option>높음</option>
+                  <option value="Standard">Standard</option>
+                  <option value="High">High</option>
                 </select>
-                <div className="mt-2 text-xs text-neutral-500">
-                  * 사진 1~2장만 더하면 안내가 매우 빨라집니다.
+
+                <div className="mt-3 text-[12px] font-light text-neutral-600">
+                  당신의 공간에 어울리는 <span className="font-medium">깨끗함만 남기세요.</span> (사진 1~2장 첨부 시 안내가 가장 빠릅니다)
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* 톤 수정된 Problem/Solution */}
-        <div className="mt-6 rounded-3xl border border-neutral-200/70 bg-white/70 p-5">
-          <div className="text-sm font-medium text-neutral-800">
-            <span className="rounded-lg px-2 py-1" style={{ background: "rgba(11,31,59,0.08)", color: THEME.navy }}>
-              매일 마주하는 거실, 아직도 관리하기 힘든 커튼으로 가려두셨나요?
+        {/* Elegant problem/solution message */}
+        <div className="mt-7 rounded-[24px] border border-neutral-200/70 bg-white/60 p-6">
+          <div className="text-[15px] font-light leading-relaxed text-neutral-800">
+            <span className="font-medium" style={{ color: THEME.charcoal }}>
+              무거운 커튼은 공간을 좁아 보이게 합니다.
             </span>{" "}
-            이제 관리는 덜어내고 <span className="font-semibold" style={{ color: THEME.navy }}>아름다움만 남기세요.</span>
+            {BRAND.product}은{" "}
+            <span className="font-medium" style={{ color: THEME.charcoal }}>
+              탁 트인 개방감과 정돈된 결
+            </span>
+            을 선사합니다 — 관리는 덜고, 아름다움은 더합니다.
           </div>
 
-          <ul className="mt-4 grid grid-cols-1 gap-2 text-sm text-neutral-700 sm:grid-cols-3">
+          <ul className="mt-5 grid grid-cols-1 gap-2 text-sm text-neutral-700 sm:grid-cols-3">
             {[
-              "정갈한 라인으로 공간의 격을 정리",
-              "부분 관리로 ‘유지 비용(시간)’을 최소화",
-              "빛과 무드가 공간의 가치를 끌어올림",
+              "빛의 흐름을 ‘라인’으로 정리",
+              "무드가 공간의 가치를 상승",
+              "호텔 라운지 같은 정돈감",
             ].map((t) => (
               <li key={t} className="flex items-start gap-2">
-                <CheckCircle2 className="mt-0.5 h-4 w-4" style={{ color: THEME.navy }} />
-                {t}
+                <CheckCircle2 className="mt-0.5 h-4 w-4" style={{ color: THEME.gold }} />
+                <span className="font-light">{t}</span>
               </li>
             ))}
           </ul>
@@ -382,40 +520,41 @@ function QuickEstimate() {
   );
 }
 
-function ComparisonTable() {
+function Comparison() {
   const rows = [
-    { k: "인테리어 완성도", curtain: "○", blind: "△", unislat: "◎" },
-    { k: "정갈한 라인감", curtain: "△", blind: "◎", unislat: "◎" },
+    { k: "공간의 결(라인)", curtain: "△", blind: "◎", unislat: "◎" },
+    { k: "무드(고급감)", curtain: "○", blind: "△", unislat: "◎" },
+    { k: "개방감", curtain: "△", blind: "○", unislat: "◎" },
     { k: "유지/관리 부담", curtain: "△", blind: "○", unislat: "◎" },
-    { k: "부분 관리", curtain: "✕", blind: "✕", unislat: "◎" },
-    { k: "공간의 가치(무드)", curtain: "○", blind: "△", unislat: "◎" },
   ];
 
   return (
-    <div className="mt-10 overflow-hidden rounded-3xl border border-neutral-200/70 bg-white/65 shadow-sm backdrop-blur">
-      <div className="p-6 sm:p-8">
-        <div className="text-xs font-medium text-neutral-500">비교표</div>
-        <h3 className="mt-2 text-2xl font-semibold tracking-tight text-neutral-900">
-          선택을 ‘확신’으로 바꾸는 한 장
+    <div className="mt-10 overflow-hidden rounded-[28px] border border-neutral-200/70 bg-white/55 shadow-[0_10px_30px_rgba(0,0,0,0.06)] backdrop-blur">
+      <div className="p-7 sm:p-10">
+        <div className="text-[11px] font-medium text-neutral-500">COMPARISON</div>
+        <h3 className="slat-display mt-2 text-2xl font-medium" style={{ color: THEME.charcoal }}>
+          선택을 ‘확신’으로 바꾸는 비교
         </h3>
 
         <div className="mt-6 overflow-x-auto">
           <table className="w-full min-w-[640px] border-collapse text-left text-sm">
             <thead>
               <tr className="border-b border-neutral-200">
-                <th className="py-3 pr-4 font-semibold text-neutral-900">항목</th>
-                <th className="py-3 pr-4 font-medium text-neutral-700">일반 커튼</th>
-                <th className="py-3 pr-4 font-medium text-neutral-700">일반 블라인드</th>
-                <th className="py-3 pr-4 font-semibold text-neutral-900">유니슬렛</th>
+                <th className="py-3 pr-4 font-medium text-neutral-900">항목</th>
+                <th className="py-3 pr-4 font-light text-neutral-700">일반 커튼</th>
+                <th className="py-3 pr-4 font-light text-neutral-700">일반 블라인드</th>
+                <th className="py-3 pr-4 font-medium text-neutral-900">{BRAND.product}</th>
               </tr>
             </thead>
             <tbody>
               {rows.map((r) => (
                 <tr key={r.k} className="border-b border-neutral-200/70">
-                  <td className="py-3 pr-4 font-medium text-neutral-900">{r.k}</td>
+                  <td className="py-3 pr-4 font-light text-neutral-900">{r.k}</td>
                   <td className="py-3 pr-4 text-neutral-700">{r.curtain}</td>
                   <td className="py-3 pr-4 text-neutral-700">{r.blind}</td>
-                  <td className="py-3 pr-4 font-semibold" style={{ color: THEME.navy }}>{r.unislat}</td>
+                  <td className="py-3 pr-4 font-medium" style={{ color: THEME.charcoal }}>
+                    {r.unislat}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -423,41 +562,157 @@ function ComparisonTable() {
         </div>
 
         <div className="mt-6 flex flex-col gap-2 sm:flex-row">
-          <CTAButton onClick={() => scrollToId("estimate")} variant="primary">
-            3초 견적 다시 보기
-          </CTAButton>
-          <CTAButton href={CONTACT.kakaoUrl} variant="outline">
+          <Button onClick={() => scrollToId("estimate")} variant="primary">
+            VIP 예상 견적서 확인
+          </Button>
+          <Button href={CONTACT.kakaoUrl} variant="outline">
             카톡 상담
-          </CTAButton>
+          </Button>
         </div>
       </div>
     </div>
   );
 }
 
-function Gallery() {
+function GalleryAndReviews() {
+  const reviews = [
+    {
+      // ⚠️ 예시(실제 고객 사례가 있으면 반드시 교체 권장)
+      who: "예시) 반포 자이 시공 고객님",
+      text: "거실의 인상이 ‘정돈된 호텔 라운지’처럼 바뀌었습니다. 창이 정리되니 공간 전체의 가치가 올라가 보입니다.",
+    },
+    {
+      who: "예시) 한남 더힐 시공 고객님",
+      text: "빛이 들어오는 결이 아름답습니다. 기능보다 ‘분위기’가 압도적으로 좋아졌고, 사진이 정말 잘 나옵니다.",
+    },
+    {
+      who: "예시) 해운대 마린시티 시공 고객님",
+      text: "라인이 깔끔해져서 고급스러움이 살아납니다. 무엇보다 관리 부담이 줄어 ‘좋은 상태’를 오래 유지할 수 있었습니다.",
+    },
+  ];
+
   return (
-    <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6">
-      {MEDIA.gallery.map((g, i) => (
-        <figure
-          key={i}
-          className="group relative overflow-hidden rounded-3xl border border-neutral-200/70 bg-neutral-100"
-        >
-          <SafeImage
-            src={g.src}
-            alt={g.title}
-            className="h-56 w-full object-cover transition duration-700 group-hover:scale-[1.02] sm:h-64"
-          />
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent" />
-          <figcaption className="absolute bottom-0 left-0 right-0 p-4 sm:p-5">
-            <span className="rounded-full bg-white/90 px-2.5 py-1 text-xs font-semibold text-neutral-900">
-              {g.label}
-            </span>
-            <div className="mt-2 text-base font-semibold text-white sm:text-lg">{g.title}</div>
-          </figcaption>
-        </figure>
-      ))}
-    </div>
+    <section className="mx-auto max-w-6xl px-4 pb-20 pt-16 sm:pb-28 sm:pt-24">
+      <div className="text-[11px] font-medium text-neutral-500">VISUAL PROOF</div>
+      <h2 className="slat-display mt-2 text-3xl font-medium sm:text-4xl" style={{ color: THEME.charcoal }}>
+        프리미엄은, 사진에서 먼저 드러납니다
+      </h2>
+      <p className="mt-4 max-w-2xl text-[15px] font-light leading-relaxed text-neutral-700">
+        아래 이미지는 분위기 참고용 연출 컷(예시)입니다. 전환율을 올리려면 실제 시공 사진으로 교체하는 것이 가장 효과적입니다.
+      </p>
+
+      <div className="mt-10 grid grid-cols-1 gap-5 sm:grid-cols-2">
+        {UNSPLASH.gallery.map((src, i) => (
+          <figure
+            key={i}
+            className="group relative overflow-hidden rounded-[28px] border border-neutral-200/70 bg-white/50 shadow-[0_10px_30px_rgba(0,0,0,0.06)]"
+          >
+            <SafeImage
+              src={src}
+              alt="Luxury interior reference"
+              className="h-64 w-full object-cover transition duration-700 group-hover:scale-[1.02] sm:h-72"
+            />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/45 via-black/10 to-transparent" />
+            <figcaption className="absolute bottom-0 left-0 right-0 p-5">
+              <span
+                className="rounded-full border px-3 py-1 text-[11px] font-medium"
+                style={{
+                  borderColor: "rgba(255,255,255,0.20)",
+                  background: "rgba(255,255,255,0.10)",
+                  color: "rgba(255,255,255,0.90)",
+                }}
+              >
+                Signature Reference
+              </span>
+            </figcaption>
+          </figure>
+        ))}
+      </div>
+
+      <div className="mt-14 grid grid-cols-1 gap-5 sm:grid-cols-3">
+        {reviews.map((r) => (
+          <div
+            key={r.who}
+            className="rounded-[28px] border border-neutral-200/70 bg-white/55 p-7 shadow-[0_10px_30px_rgba(0,0,0,0.06)] backdrop-blur"
+          >
+            <div className="flex items-center gap-2 text-sm font-medium" style={{ color: THEME.charcoal }}>
+              <Star className="h-4 w-4" style={{ color: THEME.gold }} />
+              {r.who}
+            </div>
+            <p className="mt-4 text-[14px] font-light leading-relaxed text-neutral-700">{r.text}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function Offer() {
+  return (
+    <section id="offer" className="mx-auto max-w-6xl px-4 pb-28 pt-16 sm:pb-28 sm:pt-24">
+      <div
+        className="overflow-hidden rounded-[32px] border p-8 shadow-[0_18px_50px_rgba(0,0,0,0.12)] sm:p-12"
+        style={{
+          borderColor: "rgba(28,25,23,0.18)",
+          background: `linear-gradient(135deg, ${THEME.charcoal}, #0f0d0c)`,
+          color: THEME.ivory,
+        }}
+      >
+        <div className="text-[11px] font-medium text-white/70">CONSULTATION</div>
+        <h2 className="slat-display mt-3 text-3xl font-medium sm:text-4xl">
+          당신의 공간을, ‘완성된 거실’로
+        </h2>
+        <p className="mt-4 max-w-2xl text-[15px] font-light leading-relaxed text-white/85">
+          결정을 요구하지 않습니다. 먼저 확인만 하세요.
+          사진 1~2장과 대략의 사이즈만 있으면, 공간에 맞는 톤과 옵션을 VIP 예상 견적서로 안내드립니다.
+        </p>
+
+        <div className="mt-8 flex flex-col gap-2 sm:flex-row">
+          <a
+            href={`tel:${CONTACT.tel}`}
+            className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-white px-6 py-3 text-[15px] font-medium text-[#1c1917] transition-transform duration-150 hover:scale-[1.02] active:scale-[0.98] sm:w-auto"
+          >
+            <PhoneCall className="h-4 w-4" />
+            전화 상담
+          </a>
+          <a
+            href={CONTACT.kakaoUrl}
+            className="inline-flex w-full items-center justify-center gap-2 rounded-2xl px-6 py-3 text-[15px] font-medium transition-transform duration-150 hover:scale-[1.02] active:scale-[0.98] sm:w-auto"
+            style={{
+              background: `linear-gradient(135deg, rgba(212,175,55,0.95), rgba(212,175,55,0.80))`,
+              color: THEME.charcoal,
+            }}
+          >
+            <MessageCircle className="h-4 w-4" />
+            카톡 상담
+          </a>
+        </div>
+
+        <div className="mt-10 grid grid-cols-1 gap-3 sm:grid-cols-3">
+          {["거실/창 사진 1~2장", "대략 사이즈(가로·세로) 또는 창 개수", "원하는 무드(밝게/차분/차광/반려동물)"].map(
+            (t) => (
+              <div
+                key={t}
+                className="rounded-3xl border p-5 text-[14px] font-light"
+                style={{
+                  borderColor: "rgba(255,255,255,0.18)",
+                  background: "rgba(255,255,255,0.06)",
+                }}
+              >
+                <div className="flex items-start gap-2">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4" style={{ color: THEME.gold }} />
+                  <span className="text-white/90">{t}</span>
+                </div>
+              </div>
+            )
+          )}
+        </div>
+
+        <div className="mt-5 text-[11px] font-light text-white/55">
+          * 최종 금액은 실측 후 확정됩니다.
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -467,19 +722,20 @@ function StickyMobileCTA() {
       <div className="mx-auto flex max-w-6xl items-center gap-2 px-3 py-3 pb-[calc(env(safe-area-inset-bottom)+12px)]">
         <a
           href={`tel:${CONTACT.tel}`}
-          className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-neutral-200 bg-white px-4 py-3 text-sm font-medium text-neutral-900 transition-transform hover:scale-105 active:scale-95"
+          className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-neutral-200 bg-white px-4 py-3 text-sm font-medium transition-transform hover:scale-[1.02] active:scale-[0.98]"
+          style={{ color: THEME.charcoal }}
         >
           <PhoneCall className="h-4 w-4" />
-          전화 상담
+          전화
         </a>
         <button
           onClick={() => scrollToId("estimate")}
-          className="inline-flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold text-white transition-transform hover:scale-105 active:scale-95"
-          style={{ background: THEME.navy }}
+          className="inline-flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-medium transition-transform hover:scale-[1.02] active:scale-[0.98]"
+          style={{ background: THEME.charcoal, color: THEME.ivory }}
           type="button"
         >
           <MessageCircle className="h-4 w-4" />
-          견적 확인
+          VIP 견적서
         </button>
       </div>
     </div>
@@ -487,252 +743,124 @@ function StickyMobileCTA() {
 }
 
 export default function App() {
-  // CSS 변수로 navy를 배너에서 쓰기 위해(간단)
-  useEffect(() => {
-    document.documentElement.style.setProperty("--navy", THEME.navy);
-  }, []);
-
-  const identityTags = [
-    "🏡 신혼집",
-    "🐈 반려동물",
-    "☕ 홈카페",
-    "🛋️ 인테리어 취향",
-    "🧺 관리 최소",
-    "📸 거실 사진 잘 나오는 집",
-  ];
+  useLuxuryFonts();
 
   return (
-    <div className="min-h-screen" style={{ background: THEME.greige }}>
-      <ScarcityBanner />
+    <div className="min-h-screen slat-body" style={{ background: THEME.greige }}>
+      <TopNotice />
 
-      {/* Top bar */}
-      <header className="sticky top-0 z-40 border-b border-neutral-200/60 bg-[#f3eee6]/85 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
-          <div className="flex items-center gap-2">
+      {/* NAV */}
+      <header className="sticky top-0 z-40 border-b border-neutral-200/60 bg-white/50 backdrop-blur">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
+          <div className="flex items-center gap-3">
             <div
-              className="rounded-2xl px-3 py-1 text-xs font-semibold tracking-wider text-white"
-              style={{ background: THEME.navy }}
+              className="rounded-2xl px-3 py-1 text-[11px] font-medium tracking-widest"
+              style={{ background: THEME.charcoal, color: THEME.ivory }}
             >
               {BRAND.name}
             </div>
-            <div className="hidden text-xs font-medium text-neutral-600 sm:block">
-              {BRAND.product}
+            <div className="hidden text-[12px] font-light text-neutral-700 sm:block">
+              {BRAND.product} · Signature Collection
             </div>
           </div>
 
           <div className="hidden items-center gap-2 sm:flex">
-            <CTAButton href={`tel:${CONTACT.tel}`} variant="outline">전화</CTAButton>
-            <CTAButton onClick={() => scrollToId("estimate")} variant="primary">3초 견적</CTAButton>
+            <Button href={`tel:${CONTACT.tel}`} variant="outline">
+              전화
+            </Button>
+            <Button onClick={() => scrollToId("estimate")} variant="primary">
+              VIP 견적서
+            </Button>
           </div>
 
           <div className="sm:hidden">
             <button
               onClick={() => scrollToId("estimate")}
-              className="rounded-2xl px-4 py-2 text-sm font-semibold text-white transition-transform hover:scale-105 active:scale-95"
-              style={{ background: THEME.navy }}
+              className="rounded-2xl px-4 py-2 text-sm font-medium transition-transform hover:scale-[1.02] active:scale-[0.98]"
+              style={{ background: THEME.charcoal, color: THEME.ivory }}
               type="button"
             >
-              견적
+              견적서
             </button>
           </div>
         </div>
       </header>
 
-      {/* HERO (프리미엄 톤/여백/중앙 정렬) */}
-      <section className="mx-auto max-w-6xl px-4 pb-10 pt-10 sm:pb-14 sm:pt-14">
-        <div className="relative overflow-hidden rounded-[2rem] border border-neutral-200/70 bg-white/45 shadow-sm backdrop-blur">
-          {/* Background visual */}
-          <div className="absolute inset-0">
-            <video
-              className="h-full w-full object-cover"
-              autoPlay
-              muted
-              loop
-              playsInline
-              preload="metadata"
-              poster={MEDIA.heroImage}
-              onError={(e) => {
-                e.currentTarget.style.display = "none";
-              }}
-            >
-              <source src={MEDIA.heroVideoMp4} type="video/mp4" />
-            </video>
-          </div>
-          <SafeImage
-            src={MEDIA.heroImage}
-            alt="유니슬렛 프리미엄 거실 이미지"
-            className="h-[520px] w-full object-cover"
-          />
+      {/* HERO (Spacing x1.5, Premium) */}
+      <section className="mx-auto max-w-6xl px-4 pb-20 pt-16 sm:pb-28 sm:pt-24">
+        <div className="relative overflow-hidden rounded-[36px] border border-neutral-200/70 bg-white/40 shadow-[0_22px_70px_rgba(0,0,0,0.14)]">
+          <SafeImage src={UNSPLASH.hero} alt="Luxury interior hero" className="h-[560px] w-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/30 to-black/60" />
 
-          {/* Premium overlay */}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-black/40" />
-          <div className="relative z-10 flex min-h-[520px] items-center justify-center px-6 py-10">
+          {/* Centered elegant layout */}
+          <div className="absolute inset-0 flex items-center justify-center px-6">
             <div className="mx-auto max-w-3xl text-center text-white">
-              <div className="mb-5 inline-flex flex-wrap justify-center gap-2">
-                <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium">
-                  프리미엄 인테리어
-                </span>
-                <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium">
-                  공간의 가치 상승
-                </span>
-                <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium">
-                  정갈한 라인
-                </span>
+              <div className="mb-6 flex flex-wrap justify-center gap-2">
+                <Badge>[Premium Window Styling]</Badge>
+                <Badge>[Signature Collection]</Badge>
               </div>
 
-              <h1 className="text-3xl font-semibold leading-[1.12] tracking-[-0.02em] sm:text-5xl">
-                단 한 번의 시공으로,
+              <h1 className="slat-display text-3xl font-medium leading-[1.14] sm:text-6xl">
+                당신의 거실,
                 <br />
-                거실이 5성급 호텔 라운지가 됩니다.
+                5성급 호텔 라운지가 됩니다.
               </h1>
 
-              <p className="mt-5 text-base font-light leading-relaxed text-white/90 sm:text-lg">
-                커튼의 포근함과 블라인드의 정갈함, 그 완벽한 결합.
-                <br className="hidden sm:block" />
-                당신의 공간에 품격을 입히세요.
+              <p className="mt-6 text-[15px] font-light leading-relaxed text-white/90 sm:text-lg">
+                빛과 바람이 머무는 곳. 커튼의 우아함과 블라인드의 기능을 넘어선, {BRAND.product}.
               </p>
 
-              <div className="mt-7 flex flex-col justify-center gap-2 sm:flex-row">
-                <CTAButton onClick={() => scrollToId("estimate")} variant="primary">
-                  무료 실측 혜택으로 견적 확인
-                </CTAButton>
-                <CTAButton href={CONTACT.kakaoUrl} variant="outline">
+              <div className="mt-8 flex flex-col justify-center gap-2 sm:flex-row">
+                <Button onClick={() => scrollToId("estimate")} variant="gold">
+                  VIP 예상 견적서 확인
+                </Button>
+                <Button href={CONTACT.kakaoUrl} variant="outline">
                   카톡 상담
-                </CTAButton>
+                </Button>
               </div>
 
-              <div className="mt-7">
-                <div className="text-xs font-light text-white/70">이 중 하나라도 해당되면, 만족도가 특히 높습니다</div>
-                <div className="mt-2 flex flex-wrap justify-center gap-2">
-                  {identityTags.map((t) => (
-                    <span
-                      key={t}
-                      className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium text-white/90"
-                    >
-                      {t}
-                    </span>
-                  ))}
-                </div>
+              <div className="mt-8 text-[12px] font-light text-white/70">
+                * 프리미엄 무드는 “창”에서 시작됩니다. (실제 시공 사진으로 교체 시 전환율이 가장 크게 상승합니다)
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* PROBLEM/SOLUTION + CALC */}
-      <section className="mx-auto max-w-6xl px-4 pb-14 sm:pb-20">
-        <div className="rounded-[2rem] border border-neutral-200/60 bg-white/55 p-6 shadow-sm backdrop-blur sm:p-10">
-          <div className="text-xs font-medium text-neutral-500">거실의 품격</div>
-
-          <h2 className="mt-2 text-2xl font-semibold tracking-tight text-neutral-900 sm:text-3xl">
-            매일 마주하는 거실,
+      {/* PROBLEM / SOLUTION + VIP Estimate */}
+      <section className="mx-auto max-w-6xl px-4 pb-20 sm:pb-28">
+        <div className="rounded-[36px] border border-neutral-200/70 bg-white/45 p-7 shadow-[0_14px_45px_rgba(0,0,0,0.08)] backdrop-blur sm:p-12">
+          <div className="text-[11px] font-medium text-neutral-500">CONCEPT</div>
+          <h2 className="slat-display mt-3 text-3xl font-medium sm:text-4xl" style={{ color: THEME.charcoal }}>
+            당신의 공간에 어울리는
             <br />
-            <span style={{ color: THEME.navy }}>아름다움만 남기고 관리 부담은 덜어내세요.</span>
+            깨끗함만 남기세요
           </h2>
-
-          <p className="mt-4 text-sm font-light leading-relaxed text-neutral-700 sm:text-base">
-            “좋은 인테리어”는 새 가구가 아니라, 창에서 결정됩니다.
-            정돈된 라인과 고급스러운 무드가 공간의 가치를 끌어올립니다.
+          <p className="mt-5 max-w-3xl text-[15px] font-light leading-relaxed text-neutral-700">
+            매일 마주하는 거실, 아직도 관리하기 힘든 커튼으로 가려두셨나요?
+            이제 관리는 덜어내고 아름다움만 남기세요.
+            무거운 커튼은 공간을 좁아 보이게 만들고, {BRAND.product}은 탁 트인 개방감과 정돈된 결을 선사합니다.
           </p>
 
           <div id="estimate">
-            <QuickEstimate />
+            <VIPEstimateCard />
           </div>
 
-          <ComparisonTable />
+          <Comparison />
         </div>
       </section>
 
-      {/* SOCIAL PROOF */}
-      <section className="mx-auto max-w-6xl px-4 pb-14 sm:pb-20">
-        <div className="text-xs font-medium text-neutral-500">전후 사진</div>
-        <h2 className="mt-2 text-2xl font-semibold tracking-tight text-neutral-900 sm:text-3xl">
-          사진은 ‘분위기 변화’를 숨기지 않습니다
-        </h2>
+      <GalleryAndReviews />
+      <Offer />
 
-        <Gallery />
-
-        <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-3">
-          {[
-            {
-              title: "거실의 ‘급’이 달라 보임",
-              text: "창 라인이 정리되면, 공간 전체가 정돈된 인상으로 바뀝니다.",
-            },
-            {
-              title: "유지 비용(시간)이 줄어듦",
-              text: "관리 부담이 줄면 ‘예쁜 상태’를 오래 유지할 수 있습니다.",
-            },
-            {
-              title: "무드가 생활 만족도로 연결",
-              text: "빛과 질감은 매일의 기분을 바꿉니다. 결국 집의 가치가 올라갑니다.",
-            },
-          ].map((r) => (
-            <div key={r.title} className="rounded-3xl border border-neutral-200/70 bg-white/70 p-6 shadow-sm">
-              <div className="flex items-center gap-2 text-sm font-medium text-neutral-900">
-                <Star className="h-4 w-4" style={{ color: THEME.navy }} />
-                {r.title}
-              </div>
-              <p className="mt-3 text-sm font-light leading-relaxed text-neutral-700">{r.text}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* OFFER */}
-      <section id="offer" className="mx-auto max-w-6xl px-4 pb-24 sm:pb-20">
-        <div className="rounded-[2rem] border border-neutral-200/60 p-6 text-white shadow-sm sm:p-10" style={{ background: THEME.navy }}>
-          <div className="text-xs font-medium text-white/70">상담 신청</div>
-          <h2 className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">
-            결정을 요구하지 않습니다.
-            <br />
-            먼저 “확인”부터 하세요.
-          </h2>
-          <p className="mt-3 max-w-2xl text-sm font-light leading-relaxed text-white/85 sm:text-base">
-            사진 1~2장 + 대략 사이즈만 있으면,
-            당신의 공간에 가장 어울리는 톤과 옵션으로 빠르게 안내합니다.
-          </p>
-
-          <div className="mt-6 flex flex-col gap-2 sm:flex-row">
-            <a
-              href={`tel:${CONTACT.tel}`}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-white px-5 py-3 text-base font-medium text-neutral-900 transition-transform hover:scale-105 active:scale-95 sm:w-auto"
-            >
-              <PhoneCall className="h-4 w-4" /> 전화 상담
-            </a>
-            <a
-              href={CONTACT.kakaoUrl}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-2xl px-5 py-3 text-base font-semibold text-white transition-transform hover:scale-105 active:scale-95 sm:w-auto"
-              style={{ background: "rgba(255,255,255,0.14)" }}
-            >
-              <MessageCircle className="h-4 w-4" /> 카톡 상담
-            </a>
+      <footer className="border-t border-neutral-200/70 bg-white/40 pb-28 sm:pb-10">
+        <div className="mx-auto max-w-6xl px-4 py-10 text-sm text-neutral-700">
+          <div className="font-medium" style={{ color: THEME.charcoal }}>
+            {BRAND.name}
           </div>
-
-          <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
-            {[
-              "사진(창/거실) 1~2장",
-              "대략 사이즈(가로·세로) 또는 창 개수",
-              "원하는 무드(밝게/차분/차광/반려동물 등)",
-            ].map((t) => (
-              <div key={t} className="rounded-3xl bg-white/10 p-5 text-sm text-white/90">
-                <div className="flex items-start gap-2">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 text-white/90" />
-                  <span className="font-light">{t}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-4 text-xs text-white/60">* 최종 금액은 실측 후 확정됩니다.</div>
-        </div>
-      </section>
-
-      <footer className="border-t border-neutral-200/60 pb-28 sm:pb-8" style={{ background: THEME.greige }}>
-        <div className="mx-auto max-w-6xl px-4 py-8 text-sm text-neutral-600">
-          <div className="font-medium" style={{ color: THEME.ink }}>{BRAND.name}</div>
-          <div className="mt-1">
+          <div className="mt-2 text-[13px] font-light">
             상담:{" "}
-            <a className="font-semibold" style={{ color: THEME.ink }} href={`tel:${CONTACT.tel}`}>
+            <a href={`tel:${CONTACT.tel}`} className="font-medium" style={{ color: THEME.charcoal }}>
               {CONTACT.tel}
             </a>
           </div>
